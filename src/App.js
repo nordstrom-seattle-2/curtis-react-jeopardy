@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Clue from './Clue/Clue';
 import './App.css';
 
 export class App extends Component {
@@ -7,6 +8,7 @@ export class App extends Component {
     this.state = {
       score: 0,
       submittedAnswer: '',
+      clues: [],
     };
     this.getAClueCurtis();
 
@@ -40,13 +42,14 @@ export class App extends Component {
   getAClueCurtis() {
     fetch('http://jservice.io/api/random')
       .then(response => response.json())
-      .then(clues => clues[0])
-      .then(clue => {
+      // .then(clues => clues[0])
+      .then(clues => {
         this.setState({
-          question: clue.question,
-          answer: clue.answer,
-          value: clue.value,
-          categoryName: clue.category.title,
+          clues: clues
+          // question: clue.question,
+          // answer: clue.answer,
+          // value: clue.value,
+          // categoryName: clue.category.title,
         });
       });
   }
@@ -56,9 +59,19 @@ export class App extends Component {
       <div className="App">
         <h1>Jeopardy!</h1>
         <p>Score: ${this.state.score}</p>
-        <p>Question: {this.state.question}</p>
-        <p>Category Name: {this.state.categoryName}</p>
-        <p>Value: ${this.state.value}</p>
+
+        {/*<Clue question={this.state.question}
+              categoryName={this.state.categoryName}
+              value={this.state.value} />*/}
+
+        {
+          this.state.clues.map(clue =>(
+            <Clue question={clue.question}
+                  categoryName={clue.category.title}
+                  value={clue.value} />
+          ))
+        }
+
         <p>
           <input type="text"
                  placeholder="your answer here"
