@@ -1,16 +1,17 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import Clue from './Clue/Clue';
 import AnswerBox from './AnswerBox/AnswerBox';
+import { clueSelected, seas } from './store/actions';
+import { fetchClues } from './store/thunks';
 import './App.css';
 
 export class App extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.state = {
       score: 0,
       submittedAnswer: '',
-      clues: [],
-      selectedClue: null,
     };
     this.getAClueCurtis();
 
@@ -20,7 +21,7 @@ export class App extends Component {
   }
 
   handleClueSelection(clue) {
-    this.setState({ selectedClue: clue });
+    this.props.selectClue(clue);
   }
 
   handleAnswerInput = (e) => {
@@ -31,42 +32,24 @@ export class App extends Component {
 
   handleAnswerSubmission() {
     const submitted = this.state.submittedAnswer.toLowerCase();
-    const answer = this.state.selectedClue.answer.toLowerCase();
+    const answer = this.props.selectedClue.answer.toLowerCase();
     if (submitted === answer) {
       this.setState({
-        score: this.state.score + this.state.selectedClue.value,
+        score: this.state.score + this.props.selectedClue.value,
         submittedAnswer: '',
-        selectedClue: null,
       });
     } else {
       this.setState({
-        score: this.state.score - this.state.selectedClue.value,
+        score: this.state.score - this.props.selectedClue.value,
         submittedAnswer: '',
-        selectedClue: null,
       });
     }
+    this.props.submitAnswer();
     this.getAClueCurtis();
   }
 
   getAClueCurtis() {
-    Promise.all([
-      fetch('http://jservice.io/api/random'),
-      fetch('http://jservice.io/api/random'),
-      fetch('http://jservice.io/api/random'),
-    ])
-      .then(responses => {
-        return Promise.all([
-          responses[0].json(),
-          responses[1].json(),
-          responses[2].json(),
-        ]);
-      })
-      .then(clueArrays => clueArrays.map(arr => arr[0]))
-      .then(clues => {
-        this.setState({
-          clues: clues
-        });
-      });
+    this.props.fetchClues();
   }
 
   render() {
@@ -76,12 +59,12 @@ export class App extends Component {
         <p>Score: ${this.state.score}</p>
 
         {
-          this.state.clues.map(clue =>(
+          this.props.clues.map(clue =>(
             <Clue question={clue.question}
                   categoryName={clue.category.title}
                   value={clue.value}
                   key={clue.id}
-                  selected={this.state.selectedClue === clue}
+                  selected={this.props.selectedClue === clue}
                   handleClueSelection={() => this.handleClueSelection(clue)} />
           ))
         }
@@ -89,10 +72,28 @@ export class App extends Component {
         <AnswerBox submittedAnswer={this.state.submittedAnswer}
                    handleAnswerInput={this.handleAnswerInput}
                    handleAnswerSubmission={this.handleAnswerSubmission}
-                   visible={this.state.selectedClue !== null} />
+                   visible={this.props.selectedClue !== null} />
       </div>
     );
   }
 }
 
-export default App;
+const mapStateToProps = state => {
+  return {
+    selectedClue: state.selectedClue,
+    clues: state.clues,
+  };
+};
+
+const mapDispatchToProps = dispatch => {
+  return {
+    selectClue: clue => dispatch(clueSelected(clue)),
+    submitAnswer: () => dispatch(seas()),
+    fetchClues: () => dispatch(fetchClues()),
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App);
